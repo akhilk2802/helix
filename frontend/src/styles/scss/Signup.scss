@@ -1,0 +1,65 @@
+.signup-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signup-card {
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 24px 0 rgba(80, 80, 120, 0.1);
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-width: 340px;
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.signup-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4f46e5;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.helix-logo {
+  font-size: 2rem;
+}
+
+.helix-brand {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #4f46e5;
+  letter-spacing: 0.02em;
+}
+
+.signup-btn {
+  width: 100%;
+  background: linear-gradient(90deg, #4f46e5 60%, #6366f1 100%);
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0;
+  transition: background 0.2s;
+}
+
+.signup-btn:hover,
+.signup-btn:focus {
+  background: linear-gradient(90deg, #6366f1 60%, #4f46e5 100%);
+}
+
+.signup-switch {
+  text-align: center;
+  font-size: 0.97rem;
+  margin-top: 0.5rem;
+}

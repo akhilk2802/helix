@@ -1,0 +1,29 @@
+.message-bubble {
+  display: flex;
+  margin-bottom: 0.5rem;
+  max-width: 75%;
+  transition: background 0.2s;
+}
+
+.message-bubble.left {
+  justify-content: flex-start;
+}
+
+.message-bubble.right {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.bubble-text {
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  background-color: #e0dddd;
+  color: #000;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  transition: background 0.2s, color 0.2s;
+}
+
+.message-bubble.right .bubble-text {
+  background-color: #4f46e5;
+  color: #fff;
+}

@@ -12,7 +12,7 @@ def call_llm(prompt: str) -> str:
                 {"role": "system", "content": "You are Helix, a recruiter assistant."},
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=300,
+            max_tokens=1500,
             temperature=0.7
         )
         return response.choices[0].message.content.strip()

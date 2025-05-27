@@ -1,0 +1,59 @@
+.home-main {
+  height: 100vh;
+  width: 100%;
+  padding: 0;
+  background: linear-gradient(120deg, #f9f9fc 60%, #f3f4fa 100%);
+  // border: 1px solid black;
+  overflow: hidden;
+  border-radius: 1rem;
+
+  .chat-panel {
+    display: flex;
+    // border: 1px solid red;
+    direction: column;
+    height: 98%;
+    width: 100%;
+    padding: 0.5rem;
+  }
+}
+
+.workspace-header {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #6366f1;
+  margin-bottom: 0;
+  letter-spacing: 0.01em;
+}
+
+.panel-content {
+  height: 95%;
+  width: 100%;
+  padding: 2rem;
+  background-color: #f5f5f5;
+  // border: 1px solid black;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0; // allow children to shrink for overflow
+}
+
+.workspace-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; // critical for scrollable children
+}
+
+.resize-handle {
+  width: 5px;
+  background: #ccc;
+  cursor: col-resize;
+}
+.helix-header {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #6366f1;
+  margin-bottom: 0;
+  letter-spacing: 0.01em;
+}

@@ -1,0 +1,17 @@
+.workspace {
+  padding: 2.5rem 3vw;
+  // background: linear-gradient(120deg, #f9f9fc 60%, #f3f4fa 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1 1 0;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  min-height: 0;
+
+  .sequence-block {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #ccc;
+  }
+}

@@ -1,72 +1,222 @@
 from models.sequence import Sequence
 from database import db
+from services.llm_agent import call_llm
+import json
+import uuid
 
-def create_sequence(user_id: int, role: str, tone: str) -> list:
-    """
-    Create a basic outreach sequence with predefined steps.
-    """
-    steps = [
-        f"Hi, I saw your background and thought you'd be a great fit for a {role} role.",
-        f"We're building something exciting and looking for someone with your skill set.",
-        f"If you're open to chatting, I’d love to tell you more. Let me know!"
-    ]
+def create_sequence(rec_name, company_name, session_id, user_id: int, role: str, city: str, years_of_experience: int, additional_context: str = None):
 
-    sequence_objects = []
-    for i, content in enumerate(steps, start=1):
-        seq = Sequence(user_id=user_id, step=i, content=content)
-        db.session.add(seq)
-        sequence_objects.append(seq)
+    prompt = (
+    f"You are Helix, an intelligent recruiter assistant helping a recruiter named {rec_name}.\n"
+    f"Do not introduce yourself as Helix.\n"
+    f"Generate a warm and professional 3-step recruiting sequence tailored for both LinkedIn and Email.\n"
+    f"The candidate role is: {role}, based in {city}, with {years_of_experience} years of experience for {company_name}.\n"
+    f"Return a JSON array with exactly 3 steps. Each step should have:\n"
+    f"- 'step' (integer),\n"
+    f"- 'linkedin' (string),\n"
+    f"- 'email' (string).\n"
+    )
 
-    db.session.commit()
+    if additional_context:
+        prompt += f"Additional context: {additional_context}\n"
 
-    return [{"step": s.step, "content": s.content} for s in sequence_objects]
+    prompt += (
+    f"Use [Candidate's Name] as a placeholder if not already provided or you can't find it in additional context.\n"
+    f"Emails should be signed off by {rec_name}.\n"
+    )
 
-def create_sequence(user_id: int, role: str, tone: str) -> list:
-    sequence_objects = []
-    outreach_pairs = [
-        (
-            f"Hi, I saw your LinkedIn profile and thought you'd be great for a {role} role.",
-            f"Hi, I wanted to reach out via email about a {role} opportunity."
-        ),
-        (
-            f"We're working on something exciting — open to a quick chat on LinkedIn?",
-            f"We’d love to tell you more — would you be open to chatting over email?"
-        ),
-        (
-            f"If this sounds interesting, happy to connect!",
-            f"If you're curious, I'd love to send more info by email!"
-        )
-    ]
+    llm_response = call_llm(prompt) # [{"email":"", "linkedin":"", "step":""}, {}]
+    # return llm_response
 
-    for i, (linkedin_msg, email_msg) in enumerate(outreach_pairs, start=1):
-        for channel, content in [("linkedin", linkedin_msg), ("email", email_msg)]:
-            seq = Sequence(user_id=user_id, step=i, content=content, channel=channel)
+    try:
+        steps = json.loads(llm_response)
+    except Exception as e:
+        print("Failed to parse LLM response:", e)
+        return {"error": "Failed to parse LLM output."}
+    
+    sequence_id = str(uuid.uuid4())[:4]
+
+    result = []
+    for step in steps:
+        step_raw = step["step"]
+        step_num = int("".join(filter(str.isdigit, str(step_raw))))
+        for channel in ["linkedin", "email"]:
+            content = step[channel]
+            seq = Sequence(
+                user_id=user_id, 
+                step=step_num, 
+                session_id=session_id, 
+                sequence_id=sequence_id,
+                channel=channel, 
+                content=content)
             db.session.add(seq)
-            sequence_objects.append(seq)
+            result.append({"sequence_id": sequence_id,"step": step_num, "channel": channel, "content": content})
+    db.session.commit()
+    print("result from create sequence function -> ", result)
+    return result
+
+def edit_sequence(user_id, session_id, step=None, channel=None, mode="update", modification_instruction=None, new_content=None):
+    results = []
+
+    # Get latest sequence_id based on user and session
+    query = Sequence.query.filter_by(user_id=user_id)
+    if session_id:
+        query = query.filter_by(session_id=session_id)
+
+    latest = query.order_by(Sequence.created_at.desc()).first()
+    if not latest:
+        return {"status": ["No sequences found for the user."]}
+    
+    latest_sequence_id = latest.sequence_id
+
+    if mode == "append":
+        # Fetch existing steps
+        steps = (
+            Sequence.query
+            .filter_by(user_id=user_id, sequence_id=latest_sequence_id)
+            .order_by(Sequence.step.asc(), Sequence.channel.asc())
+            .all()
+        )
+        step_list = [
+            {"step": s.step, "channel": s.channel, "content": s.content}
+            for s in steps
+        ]
+
+        last_step = db.session.query(db.func.max(Sequence.step)).filter_by(
+            user_id=user_id,
+            sequence_id=latest_sequence_id
+        ).scalar() or 0
+
+        new_step = last_step + 1
+
+        # LLM prompt to generate new step
+        prompt = (
+            f"Add a new step to this sequence:\n"
+            f"{json.dumps(step_list, indent=2)}\n"
+            f"Instruction: {modification_instruction}\n"
+            f"New Requirements: {new_content}\n"
+            f"Return a JSON object with exactly three keys: 'step', 'linkedin', and 'email'.\n"
+            f"Each value should be a string. Do not include any other keys such as 'channel' or 'content'.\n"
+            f"Example format:\n"
+            f'{{"step": 5, "linkedin": "LinkedIn message here", "email": "Email message here"}}\n'
+            f"Return only the JSON object. No explanation or extra text."
+        )   
+
+        print("prompt -> ", prompt)
+        llm_response = call_llm(prompt).strip()
+        print("LLM response for append ->", llm_response)
+
+        try:
+            parsed = json.loads(llm_response)
+            print("parsed conten -> ", parsed)
+        except Exception as e:
+            return {
+                "status": [f"Failed to parse LLM response: {e}"],
+                "raw_response": llm_response
+            }
+        
+        for ch in ["linkedin", "email"]:
+            content = parsed.get(ch, "")
+            seq = Sequence(
+                user_id=user_id,
+                session_id=session_id,
+                sequence_id=latest_sequence_id,
+                step=new_step,
+                channel=ch,
+                content=content
+            )
+            db.session.add(seq)
+            results.append(f"Appended step {new_step} on {ch}")
+
+        db.session.commit()
+
+
+    elif mode == "update":
+        # Update one or both channels for a given step
+        channels_to_update = [channel] if channel else ["linkedin", "email"]
+
+        for ch in channels_to_update:
+            step_to_update = Sequence.query.filter_by(
+                user_id=user_id,
+                sequence_id=latest_sequence_id,
+                step=step,
+                channel=ch
+            ).first()
+
+            if not step_to_update:
+                results.append(f"Step {step} on {ch} not found.")
+                continue
+
+            if not step_to_update.content:
+                results.append(f"Step {step} on {ch} has nothing to update")
+                continue
+
+            prompt = f"""Rewrite the following message:\n\"\"\"{step_to_update.content}\"\"\"\n"""
+            if modification_instruction:
+                prompt += f"Instruction: {modification_instruction}\n"
+            if new_content:
+                prompt += f"New Requirements: {new_content}\n"
+
+            updated = call_llm(prompt)
+            step_to_update.content = updated.strip()
+            results.append(f"Updated step {step} on {ch}.")
+
+        db.session.commit()
+
+    sequence = Sequence.query.filter_by(
+            user_id=user_id, 
+            sequence_id=latest_sequence_id,
+            session_id=session_id
+            ).order_by(Sequence.step, Sequence.channel).all()
+
+    sequence_list = [{"sequence_id": s.sequence_id, "step": s.step, "channel": s.channel, "content": s.content} for s in sequence]
+
+    return {
+        "status": results,
+        "sequence_list": sequence_list
+        }
+
+def delete_step(user_id, session_id, step=None, channel=None):
+    results = []
+
+    query = Sequence.query.filter_by(user_id=user_id)
+    if session_id:
+        query = query.filter_by(session_id=session_id)
+
+    latest = query.order_by(Sequence.created_at.desc()).first()
+    if not latest:
+        return {"status": ["No sequences found for the user."]}
+    
+    latest_sequence_id = latest.sequence_id
+
+    if step is None:
+        return {"status": ["Step number is required."]}
+
+    target_channels = [channel] if channel else ["email", "linkedin"]
+
+    for ch in target_channels:
+        deleted_count = Sequence.query.filter_by(
+            user_id=user_id,
+            session_id=session_id,
+            sequence_id=latest_sequence_id,
+            step=step,
+            channel=ch
+        ).delete()
+
+        if deleted_count:
+            results.append(f"Deleted step {step} on {ch}")
+        else:
+            results.append(f"Step {step} on {ch} not found")
 
     db.session.commit()
+    sequence = Sequence.query.filter_by(
+        user_id=user_id, 
+        session_id=session_id,
+        sequence_id=latest_sequence_id
+        ).order_by(Sequence.step, Sequence.channel).all()
+    sequence_list = [{"sequence_id": s.sequence_id, "step": s.step, "channel": s.channel, "content": s.content} for s in sequence]
 
-    return [
-        {"step": s.step, "channel": s.channel, "content": s.content}
-        for s in sequence_objects
-    ]
-
-def edit_sequence(step_id: int, new_content: str) -> dict:
-    """
-    Edit a specific step in the sequence.
-    """
-    step = Sequence.query.get(step_id)
-    if step:
-        step.content = new_content
-        db.session.commit()
-        return {"step": step.step, "content": step.content}
-    return {}
-
-def delete_step(step_id: int) -> None:
-    """
-    Delete a specific step from the sequence.
-    """
-    step = Sequence.query.get(step_id)
-    if step:
-        db.session.delete(step)
-        db.session.commit()
+    return {
+        "status": results,
+        "sequence_list": sequence_list
+        }

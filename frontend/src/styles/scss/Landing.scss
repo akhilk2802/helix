@@ -1,0 +1,41 @@
+.homepage {
+  // border: 1px solid #000;
+  height: 100vh;
+
+  .hero {
+    height: 100%; // Ensure it fills the full height
+    width: 100%;
+    margin: 0 auto;
+    // border: 1px solid black;
+    border-radius: 0.25rem;
+
+    display: flex;
+    align-items: center; // Center vertically
+    justify-content: center; // Center horizontally
+    flex-direction: column;
+
+    .login {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem; // Space between image and form
+    }
+
+    .landing-image {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+
+      img {
+        max-width: 80%;
+        height: auto;
+        transition: transform 0.3s ease;
+
+        &:hover {
+          transform: scale(1.03);
+        }
+      }
+    }
+  }
+}
