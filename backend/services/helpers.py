@@ -55,7 +55,6 @@ def handle_create_sequence(user_id, company_name, session_id, rec_name, **args):
     summary = f"Created outreach sequence for {args['role']} in {args['city']}."
     save_to_log(user_id, session_id, "agent", summary)
 
-    # return sequence_result
 
     return {
         "intent": "create_sequence",

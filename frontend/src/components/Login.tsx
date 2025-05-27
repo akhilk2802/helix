@@ -33,9 +33,9 @@ const Login: React.FC<LoginProps> = ({ onSwitchToSignup }) => {
         // console.log("Login successful", data);
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        const sessionId = uuidv4();
+        const user_sessionId = Math.random().toString(36).substring(2, 6);
         // console.log("sessaionId from login -> ", sessionId)
-        localStorage.setItem("session_id", sessionId);
+        localStorage.setItem("user_sessionId", user_sessionId);
 
         setEmail("")
         setPassword("")

@@ -43,13 +43,13 @@ const Chat: React.FC<ChatProps> = ({ setSequence }) => {
 
         if (!input.trim()|| !userInfo) return;
         
-        const sessionId = localStorage.getItem("session_id");
+        const user_sessionId = localStorage.getItem("user_sessionId");
         // console.log("sessaionid -> ", sessionId)
         
 
         socket.emit("send_message", {
             user_id: userInfo.id,
-            session_id: sessionId,
+            session_id: user_sessionId,
             message: input,
             rec_name: userInfo.name,
             company: userInfo.company,

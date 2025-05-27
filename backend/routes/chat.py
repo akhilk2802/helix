@@ -16,7 +16,6 @@ def chat():
         if not user_id or not user_message:
             return jsonify({"error": "user_id and message are required"}), 400
 
-        # Delegate chat handling to agent core
         response_data = handle_chat(user_id, user_message, user_name, company_name, session_id)
 
         return jsonify(response_data), 200

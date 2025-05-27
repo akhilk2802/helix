@@ -6,7 +6,7 @@ def get_tool_schemas() -> List[Dict]:
     return [
         {
             "name": "create_sequence",
-            "description": "Create a 3-step outreach sequence for a given role, location and the recruiters Company.",
+            "description": "Only use this to generate a brand new 3-step recruiting sequence from scratch based on job role and location.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -64,7 +64,7 @@ def get_tool_schemas() -> List[Dict]:
         },
         {
             "name": "delete_step",
-            "description": "Delete a step from the existing sequence for a given channel.",
+            "description": "Permanently delete a specific step from the most recent recruiting sequence. Only use this if the user clearly asks to remove a step.",
             "parameters": {
                 "type": "object",
                 "properties": {

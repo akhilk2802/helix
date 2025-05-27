@@ -2,8 +2,11 @@ import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 import os
 
+CHROMA_DB_HOST = os.getenv("CHROMA_DB_HOST")
+CHROMA_DB_PORT = os.getenv("CHROMA_DB_PORT")
+
 # Connect to the running HTTP server
-client = chromadb.HttpClient(host="localhost", port=8000)
+client = chromadb.HttpClient(host=CHROMA_DB_HOST, port=CHROMA_DB_PORT)
 
 collection = client.get_or_create_collection(
     name="helix_memory",

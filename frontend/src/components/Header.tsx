@@ -8,7 +8,7 @@ const Header: React.FC = () => {
 
   const handleSignOut = () => {
     localStorage.removeItem("user");
-    localStorage.removeItem("session_id")
+    localStorage.removeItem("user_sessionId")
     navigate("/");
   };
 
