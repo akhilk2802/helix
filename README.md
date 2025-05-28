@@ -119,3 +119,7 @@ cd helix
 
 ![Home Page](./project-layout/home3-instructions.png)
 
+### Architecture of the MVP 
+
+![Architecture](./project-layout/helix-architecture.png)
+
