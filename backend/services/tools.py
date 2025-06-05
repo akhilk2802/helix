@@ -79,20 +79,32 @@ def edit_sequence(user_id, session_id, step=None, channel=None, mode="update", m
         last_step = db.session.query(db.func.max(Sequence.step)).filter_by(user_id=user_id, sequence_id=sequence_id).scalar() or 0
         new_step = last_step + 1
 
+        print("modification_instruction -> ", modification_instruction)
+        print("new_content -> ", new_content)
+
         prompt = (
             f"Add a new step to this sequence:\n{json.dumps(step_list, indent=2)}\n"
             f"Instruction: {modification_instruction}\n"
             f"New Requirements: {new_content}\n"
-            f"Return a JSON object with exactly three keys: 'step', 'linkedin', and 'email'.\n"
-            f"Each value should be a string. Return only the JSON object."
+            f"Return a JSON object with exactly three keys: 'step', 'email', and 'linkedin'.\n"
+            f"- 'step' should be an integer.\n"
+            f"- 'email' should contain the email content.\n"
+            f"- 'linkedin' should contain the LinkedIn message.\n"
+            f"Do not include a 'channel' field. Return only this JSON object."
         )
         llm_response = call_llm(prompt).strip()
         try:
             parsed = json.loads(llm_response)
         except Exception as e:
             return {"status": [f"Failed to parse LLM response: {e}"], "raw_response": llm_response}
+        
+        print("llm_response -> ", llm_response)
 
-        for ch in ["linkedin", "email"]:
+        channels_to_append = [channel] if channel in ["linkedin", "email"] else ["linkedin", "email"]
+        print("channel requested by the user -> ", channel)
+        print("channels to append -> ", channels_to_append)
+
+        for ch in channels_to_append:
             seq = Sequence(
                 user_id=user_id, session_id=session_id, sequence_id=sequence_id,
                 step=new_step, channel=ch, content=parsed.get(ch, "")
